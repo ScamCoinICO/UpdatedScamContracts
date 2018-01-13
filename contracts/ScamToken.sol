@@ -3,7 +3,7 @@ pragma solidity ^0.4.18;
 import "./StandardToken.sol";
 import "./SafeMath.sol";
 
-contract ScamToken is StandardToken, SafeMath {
+contract ScamToken is StandardToken {
     // token metadata
     string public constant name = "Scam Token";
     string public constant symbol = "SCAM";
@@ -36,28 +36,32 @@ contract ScamToken is StandardToken, SafeMath {
         scamFundDeposit = _scamFundDeposit;
         ICOStartBlock = ICOStartBlock;
         ICOEndBlock = _ICOEndBlock;
-        totalSupply = scamSupplyCap;                // total number of scam tokens
+        totalSupply = scamFund;                // total number of scam tokens
         balances[scamFundDeposit] = scamFund;  // Deposit scam token cap to admin wallet
         CreateSCAM(scamFundDeposit, scamFund);      // logs remaining SCAM funds distributable
     }
 
-    //// @dev Accepts ether and creates additional BAt tokens
+    /**
+     * @dev Accepts ether and creates additional SCAM tokens
+     */
     function createTokens() payable external {
-        if (isFinalized || block.number < fundingStartblock || block.number > fundingEndBlock || msg.value == 0) throw;
+        if (isFinalized || block.number < ICOStartBlock || block.number > ICOEndBlock || msg.value == 0) throw;
 
-        amountEth = msg.value;
+        uint256 amountEth = msg.value;
 
-        uint256 scamRequested = mul(amountEth, tokenExchangeRate);
-        uint256 checkedSupply = add(scamRequested, totalSupply);
+        uint256 scamRequested = SafeMath.mul(amountEth, tokenExchangeRate);
+        uint256 checkedSupply = SafeMath.add(scamRequested, totalSupply);
 
         if (tokenCreationCap < checkedSupply) throw;
 
         totalSupply = checkedSupply;
-        balances[msg.sender] += tokens;
-        CreateSCAM(msg.sender, tokens);
+        balances[msg.sender] += scamRequested;
+        CreateSCAM(msg.sender, scamRequested);
     }
 
-    //// @ dev Ends funding period and sends ETH to wallet
+    /**
+     * @dev Ends funding period and sends ETH to wallet
+     */
     function finalize() external {
         // Check 1 - check that funding period has not already been isFinalized
         // Check 2 - check that the address calling this function is our address
@@ -70,7 +74,9 @@ contract ScamToken is StandardToken, SafeMath {
         }
     }
 
-    //// @dev allows users to "recover ether" XDDDDD
+    /**
+     * @dev allows users to "recover ether" XDDDDD
+     */
     function refund() external {
         throw;
     }
