@@ -2,7 +2,7 @@ pragma solidity ^0.4.18;
 
 
 /**
- * Token Parameters
+ * Token Interface
 */
 
 contract Token {

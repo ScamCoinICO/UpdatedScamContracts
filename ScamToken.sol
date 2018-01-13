@@ -1,5 +1,83 @@
 pragma solidity ^0.4.18;
 
+import "./StandardToken.sol";
+import "./SafeMath.sol";
+
+contract ScamToken is StandardToken, SafeMath {
+    // token metadata
+    string public constant name = "Scam Token";
+    string public constant symbol = "SCAM";
+    uint256 public constant decimals = 18;
+    string public version = "1.0.0";
+
+    // crowdsale parameters
+    bool public isFinalized;
+    uint256 public ICOStartBlock;    // beginning of ICO
+    uint256 public ICOEndBlock;      // end of ICO
+    uint256 public constant scamFund = 250000000 * 10**decimals; // 250M SCAM tokens
+    uint256 public constant tokenExchangeRate = 6969; // 6969 SCAM tokens to 1 ETH
+    uint256 public constant tokenCreationCap = 750000000 * 10**decimals; // capped at 750M tokens
+
+
+// contracts
+    address public ethFundDeposit; // deposit address for ETH
+    address public scamFundDeposit; // deposit address for SCAM
+
+    // events
+    event CreateSCAM(address indexed _to, uint256 _value);
+
+    /*
+    * Constructor Function
+    */
+
+    function ScamToken(address _ethFundDeposit, address _scamFundDeposit, uint256 _ICOStartBlock, uint256 _ICOEndBlock) {
+        isFinalized = false;
+        ethFundDeposit = _ethFundDeposit;
+        scamFundDeposit = _scamFundDeposit;
+        ICOStartBlock = ICOStartBlock;
+        ICOEndBlock = _ICOEndBlock;
+        totalSupply = scamSupplyCap;                // total number of scam tokens
+        balances[scamFundDeposit] = scamFund;  // Deposit scam token cap to admin wallet
+        CreateSCAM(scamFundDeposit, scamFund);      // logs remaining SCAM funds distributable
+    }
+
+    //// @dev Accepts ether and creates additional BAt tokens
+    function createTokens() payable external {
+        if (isFinalized || block.number < fundingStartblock || block.number > fundingEndBlock || msg.value == 0) throw;
+
+        amountEth = msg.value;
+
+        uint256 scamRequested = mul(amountEth, tokenExchangeRate);
+        uint256 checkedSupply = add(scamRequested, totalSupply);
+
+        if (tokenCreationCap < checkedSupply) throw;
+
+        totalSupply = checkedSupply;
+        balances[msg.sender] += tokens;
+        CreateSCAM(msg.sender, tokens);
+    }
+
+    //// @ dev Ends funding period and sends ETH to wallet
+    function finalize() external {
+        // Check 1 - check that funding period has not already been isFinalized
+        // Check 2 - check that the address calling this function is our address
+        // Check 3 - check the funding period has ended
+        if (isFinalized
+        || msg.sender != ethFundDeposit
+        || (block.number <= ICOEndBlock && totalSupply != tokenCreationCap)) {
+            isFinalized = true;
+            if (!ethFundDeposit.send(this.balance)) throw; // send eth to our wallet
+        }
+    }
+
+    //// @dev allows users to "recover ether" XDDDDD
+    function refund() external {
+        throw;
+    }
+
+}
+
+/*
 interface tokenRecipient {
     function receiveApproval(address _from, uint256 _value, address _token, bytes _extraData) public;
 }
@@ -27,9 +105,9 @@ contract ScamTokenERC20 {
         symbol = tokenSymbol;
     }
 
-    /**
+    *//**
     * Internal transfer, only can be called by this contract
-    */
+    *//*
 
     function _transfer(address _from, address _to, uint _value) internal {
         // Prevent transfer to 0x0 address. Use burn() instead
@@ -49,19 +127,19 @@ contract ScamTokenERC20 {
         assert(balanceOf[_from] + balanceOf[_to] == previousBalances);
     }
 
-    /**
+    *//**
     * Transfer tokens to specified address from your account
     *
     * @param _to Address to send scamcoins to
     * @param _value amount sending
-    */
+    *//*
     function transfer(address _to, uint256 _value) public {
         _transfer(msg.sender, _to, _value);
     }
 
-    /**
+    *//**
     * Transfer coins between addresses
-    */
+    *//*
 
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {
         require(_value <= allowance[_from][msg.sender]);
@@ -70,22 +148,22 @@ contract ScamTokenERC20 {
         return true;
     }
 
-    /**
+    *//**
     * Set allowance for other address
     * allows _spender to send no more than specified allowance _value
     *
     * @param _spender address authorized to spend
     * @param _value value allowed to send
-    */
+    *//*
 
     function approve(address _spender, uint256 _value) public returns (bool success) {
         allowance[msg.sender][_spender] = _value;
         return true;
     }
 
-    /**
+    *//**
     * set allowance for other address and notify
-    */
+    *//*
 
     function approveAndCall(address _spender, uint256 _value, bytes _extraData) public returns (bool success) {
         tokenRecipient spender = tokenRecipient(_spender);
@@ -95,9 +173,9 @@ contract ScamTokenERC20 {
         }
         return false;
     }
-    /**
+    *//**
       * Irreversibly removes specified amount of tokens from system
-    */
+    *//*
 
     function burn(uint256 _value) public returns (bool success) {
         require(balanceOf[msg.sender] >= _value);
@@ -117,3 +195,4 @@ contract ScamTokenERC20 {
         return true;
     }
 }
+*/
