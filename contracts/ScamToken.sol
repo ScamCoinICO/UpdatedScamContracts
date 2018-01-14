@@ -12,8 +12,7 @@ contract ScamToken is StandardToken {
 
     // crowdsale parameters
     bool public isFinalized;
-    uint256 public ICOStartBlock;    // beginning of ICO
-    uint256 public ICOEndBlock;      // end of ICO
+    uint256 public ICOEndTime;      // end of ICO
     uint256 public constant scamFund = 250000000 * 10**decimals; // 250M SCAM tokens
     uint256 public constant tokenExchangeRate = 6969; // 6969 SCAM tokens to 1 ETH
     uint256 public constant tokenCreationCap = 750000000 * 10**decimals; // capped at 750M tokens
@@ -30,12 +29,11 @@ contract ScamToken is StandardToken {
     * Constructor Function
     */
 
-    function ScamToken(address _ethFundDeposit, address _scamFundDeposit, uint256 _ICOStartBlock, uint256 _ICOEndBlock) {
+    function ScamToken(address _ethFundDeposit, address _scamFundDeposit, uint256 _lengthOfICO) payable public {
         isFinalized = false;
         ethFundDeposit = _ethFundDeposit;
         scamFundDeposit = _scamFundDeposit;
-        ICOStartBlock = ICOStartBlock;
-        ICOEndBlock = _ICOEndBlock;
+        ICOEndTime = now + _lengthOfICO* 1 minutes;
         totalSupply = scamFund;                // total number of scam tokens
         balances[scamFundDeposit] = scamFund;  // Deposit scam token cap to admin wallet
         CreateSCAM(scamFundDeposit, scamFund);      // logs remaining SCAM funds distributable
@@ -45,14 +43,20 @@ contract ScamToken is StandardToken {
      * @dev Accepts ether and creates additional SCAM tokens
      */
     function createTokens() payable external {
+        /* EVM wants require() over throw
         if (isFinalized || block.number < ICOStartBlock || block.number > ICOEndBlock || msg.value == 0) throw;
+        */
+        require(!isFinalized);
+        require(now <= ICOEndTime);
+        require(msg.value != 0);
 
         uint256 amountEth = msg.value;
 
         uint256 scamRequested = SafeMath.mul(amountEth, tokenExchangeRate);
         uint256 checkedSupply = SafeMath.add(scamRequested, totalSupply);
 
-        if (tokenCreationCap < checkedSupply) throw;
+        // if (tokenCreationCap < checkedSupply) throw;
+        require(tokenCreationCap >= checkedSupply);
 
         totalSupply = checkedSupply;
         balances[msg.sender] += scamRequested;
@@ -68,17 +72,17 @@ contract ScamToken is StandardToken {
         // Check 3 - check the funding period has ended
         if (isFinalized
         || msg.sender != ethFundDeposit
-        || (block.number <= ICOEndBlock && totalSupply != tokenCreationCap)) {
+        || (now <= ICOEndTime && totalSupply != tokenCreationCap)) {
             isFinalized = true;
-            if (!ethFundDeposit.send(this.balance)) throw; // send eth to our wallet
+            boolean check = !ethFundDeposit.send(this.balance); // send eth to our wallet
+            require(check);
         }
     }
 
     /**
      * @dev allows users to "recover ether" XDDDDD
      */
-    function refund() external {
-        throw;
+    function refund() external pure {
     }
 
 }
