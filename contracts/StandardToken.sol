@@ -78,6 +78,7 @@ contract StandardToken is Token {
   * @param _spender - address authorized to spend
   * @param _value - amount authorized to spend
   */
+
   function approve(address _spender, uint256 _value) public returns (bool success) {
     allowed[msg.sender][_spender] = _value;
     Approval(msg.sender, _spender, _value);
